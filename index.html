@@ -97,6 +97,9 @@
     @media (hover:hover) {
       .btn:hover, button:hover { filter: brightness(1.03); }
     }
+      /* Colour theme select styling */
+    select.select { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 10px 12px; border-radius: 14px; font-size: 14px; box-shadow: var(--shadow); }
+    select.select:active { transform: translateY(1px) scale(.997); }
   </style>
 </head>
 <body>
@@ -104,6 +107,14 @@
     <header>
       <h1>🧶 Crochet Counter</h1>
       <div class="toolbar">
+        <select id="accentSelect" class="select" aria-label="Colour theme">
+          <option value="purple">Purple</option>
+          <option value="teal">Teal</option>
+          <option value="pink">Pink</option>
+          <option value="blue">Blue</option>
+          <option value="amber">Amber</option>
+          <option value="emerald">Emerald</option>
+        </select>
         <button id="themeToggle" class="btn" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
       </div>
     </header>
@@ -174,6 +185,29 @@
         updateThemeIcon();
       });
       function updateThemeIcon(){ themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+
+      // ACCENT COLOUR THEME
+      const ACCENTS = {
+        purple: ['#6d28d9','#a78bfa'],
+        teal: ['#0d9488','#14b8a6'],
+        pink: ['#db2777','#f472b6'],
+        blue: ['#2563eb','#60a5fa'],
+        amber: ['#d97706','#f59e0b'],
+        emerald: ['#059669','#34d399']
+      };
+      const savedAccent = localStorage.getItem('cc_accent') || 'purple';
+      const accentSelect = $('#accentSelect');
+      function setAccent(name){
+        const pair = ACCENTS[name] || ACCENTS.purple;
+        document.documentElement.style.setProperty('--accent', pair[0]);
+        document.documentElement.style.setProperty('--accent-2', pair[1]);
+        localStorage.setItem('cc_accent', name);
+      }
+      setAccent(savedAccent);
+      if (accentSelect) {
+        accentSelect.value = savedAccent;
+        accentSelect.addEventListener('change', (e)=> setAccent(e.target.value));
+      }
 
       // STATE
       /** @type {Array<{id:string,name:string,count:number,step:number,goal:number|null,notes:string,locked:boolean}>} */
@@ -337,3 +371,5 @@
   </script>
 </body>
 </html>
+
+Add colour theme changer
