@@ -97,7 +97,7 @@
     @media (hover:hover) {
       .btn:hover, button:hover { filter: brightness(1.03); }
     }
-      /* Colour theme select styling */
+    /* Colour theme select styling */
     select.select { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 10px 12px; border-radius: 14px; font-size: 14px; box-shadow: var(--shadow); }
     select.select:active { transform: translateY(1px) scale(.997); }
   </style>
@@ -107,6 +107,15 @@
     <header>
       <h1>🧶 Crochet Counter</h1>
       <div class="toolbar">
+        <select id="siteThemeSelect" class="select" aria-label="Website theme">
+          <option value="system">System default</option>
+          <option value="classic">Classic</option>
+          <option value="slate">Slate</option>
+          <option value="rose">Rose</option>
+          <option value="forest">Forest</option>
+          <option value="midnight">Midnight</option>
+          <option value="solar">Solar</option>
+        </select>
         <select id="accentSelect" class="select" aria-label="Colour theme">
           <option value="purple">Purple</option>
           <option value="teal">Teal</option>
@@ -172,7 +181,7 @@
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
       const KEY = 'crochet_counter_projects_v1';
 
-      // THEME
+      // THEME (dark/light)
       const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const savedTheme = localStorage.getItem('cc_theme') || (prefersDark ? 'dark' : 'light');
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -183,10 +192,11 @@
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('cc_theme', next);
         updateThemeIcon();
+        applySiteThemeVariant();
       });
       function updateThemeIcon(){ themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
 
-      // ACCENT COLOUR THEME
+      // ACCENT COLOUR THEME (buttons/progress)
       const ACCENTS = {
         purple: ['#6d28d9','#a78bfa'],
         teal: ['#0d9488','#14b8a6'],
@@ -208,6 +218,65 @@
         accentSelect.value = savedAccent;
         accentSelect.addEventListener('change', (e)=> setAccent(e.target.value));
       }
+
+      // SITE THEME (overall website look)
+      const THEMES = {
+        classic: {
+          light: { bg:'#fafafa', panel:'#ffffff', text:'#111827', muted:'#6b7280', border:'#e5e7eb', success:'#10b981', danger:'#ef4444' },
+          dark:  { bg:'#0b0f14', panel:'#0f1721', text:'#e5e7eb', muted:'#9ca3af', border:'#1f2937', success:'#34d399', danger:'#f87171' }
+        },
+        slate: {
+          light: { bg:'#f8fafc', panel:'#ffffff', text:'#0f172a', muted:'#64748b', border:'#e2e8f0', success:'#10b981', danger:'#ef4444' },
+          dark:  { bg:'#0b1220', panel:'#0f172a', text:'#e2e8f0', muted:'#94a3b8', border:'#1e293b', success:'#34d399', danger:'#f87171' }
+        },
+        rose: {
+          light: { bg:'#fff1f2', panel:'#ffffff', text:'#881337', muted:'#9f1239', border:'#fecdd3', success:'#16a34a', danger:'#e11d48' },
+          dark:  { bg:'#3b0a14', panel:'#4a0e18', text:'#fde2e7', muted:'#fecdd3', border:'#7f1d1d', success:'#34d399', danger:'#fb7185' }
+        },
+        forest: {
+          light: { bg:'#f0fdf4', panel:'#ffffff', text:'#064e3b', muted:'#065f46', border:'#d1fae5', success:'#059669', danger:'#b91c1c' },
+          dark:  { bg:'#062a24', panel:'#0b3a32', text:'#ecfdf5', muted:'#a7f3d0', border:'#134e4a', success:'#34d399', danger:'#f87171' }
+        },
+        midnight: {
+          light: { bg:'#eef2f7', panel:'#ffffff', text:'#0b1220', muted:'#6b7280', border:'#e5e7eb', success:'#10b981', danger:'#ef4444' },
+          dark:  { bg:'#0b0f14', panel:'#0f1721', text:'#e5e7eb', muted:'#9ca3af', border:'#1f2937', success:'#34d399', danger:'#f87171' }
+        },
+        solar: {
+          light: { bg:'#fdf6e3', panel:'#fffaf0', text:'#073642', muted:'#657b83', border:'#eee8d5', success:'#2aa198', danger:'#dc322f' },
+          dark:  { bg:'#002b36', panel:'#073642', text:'#eee8d5', muted:'#93a1a1', border:'#0d3a46', success:'#2aa198', danger:'#dc322f' }
+        }
+      };
+
+      const siteThemeSelect = $('#siteThemeSelect');
+      const savedSiteTheme = localStorage.getItem('cc_site_theme') || 'system';
+
+      function applyVars(vars){
+        for (const [k,v] of Object.entries(vars)) {
+          document.documentElement.style.setProperty(`--${k}`, v);
+        }
+      }
+      function clearThemeVars(){
+        const keys = ['bg','panel','text','muted','border','success','danger'];
+        for (const k of keys) document.documentElement.style.removeProperty(`--${k}`);
+      }
+      function applySiteThemeVariant(){
+        const mode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const name = localStorage.getItem('cc_site_theme') || 'system';
+        if (name === 'system') { clearThemeVars(); return; }
+        const theme = THEMES[name] && THEMES[name][mode];
+        if (theme) applyVars(theme);
+      }
+      function setSiteTheme(name){
+        localStorage.setItem('cc_site_theme', name);
+        if (name === 'system') clearThemeVars();
+        applySiteThemeVariant();
+      }
+      if (siteThemeSelect) {
+        siteThemeSelect.value = savedSiteTheme;
+        siteThemeSelect.addEventListener('change', (e)=> setSiteTheme(e.target.value));
+      }
+      // Initial apply
+      setSiteTheme(savedSiteTheme);
 
       // STATE
       /** @type {Array<{id:string,name:string,count:number,step:number,goal:number|null,notes:string,locked:boolean}>} */
@@ -260,7 +329,7 @@
 
       function save(){ localStorage.setItem(KEY, JSON.stringify(projects)); }
 
-      function uid(){ return (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2); }
+      function uid(){ return (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2); }
 
       // ADD PROJECT
       $('#addBtn').addEventListener('click', () => {
@@ -367,6 +436,40 @@
       });
 
       render();
+
+      // -----------------------------
+      // Simple in-page tests (console)
+      // -----------------------------
+      (function runTests(){
+        const tests = [];
+        const log = (name, pass, info='') => tests.push({name, pass, info});
+        try {
+          const mode = document.documentElement.getAttribute('data-theme');
+          log('Theme attr set on load', mode === 'light' || mode === 'dark');
+
+          const beforeAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+          setAccent('teal');
+          const afterAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+          log('Accent changes on setAccent("teal")', beforeAccent !== afterAccent && afterAccent.length > 0);
+
+          const currentTheme = localStorage.getItem('cc_site_theme') || 'system';
+          setSiteTheme('classic');
+          applySiteThemeVariant();
+          const bgVar = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+          log('Site theme applies CSS vars', bgVar.length > 0);
+          setSiteTheme(currentTheme); // restore
+          applySiteThemeVariant();
+
+          // Render should produce at least one card
+          log('At least one card rendered', !!document.querySelector('.card'));
+        } catch (err) {
+          console.error('[Tests] Error while running tests', err);
+          log('Tests ran without unhandled exceptions', false, String(err));
+        }
+        const summary = tests.map(t=> `${t.pass ? '✅' : '❌'} ${t.name}${t.info? ' — '+t.info:''}`).join('\n');
+        console.log('%cCrochet Counter – Test Results:\n' + summary, 'font-family:system-ui, sans-serif');
+      })();
+
     })();
   </script>
 </body>
