@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🧶 Crochet Counter</title>
+  <meta name="description" content="A simple, offline‑friendly crochet/row counter you can use on phone or computer." />
+  <style>
+    :root {
+      --bg: #fafafa;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #6d28d9;
+      --accent-2: #a78bfa;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --shadow: 0 8px 30px rgba(0,0,0,.08);
+    }
+    [data-theme="dark"] {
+      --bg: #0b0f14;
+      --panel: #0f1721;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #a78bfa;
+      --accent-2: #8b5cf6;
+      --border: #1f2937;
+      --success: #34d399;
+      --danger: #f87171;
+      --shadow: 0 10px 30px rgba(0,0,0,.4);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg); color: var(--text);
+    }
+
+    .app { max-width: 980px; margin: 0 auto; padding: 20px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    header h1 { margin: 0; font-size: clamp(22px, 3.5vw, 32px); letter-spacing: .3px; }
+
+    .toolbar { display: flex; align-items: center; gap: 8px; }
+
+    .btn, button { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--text); padding: 10px 14px; border-radius: 14px; font-size: 14px; box-shadow: var(--shadow); transition: transform .03s ease, filter .15s ease; }
+    .btn:active, button:active { transform: translateY(1px) scale(.997); }
+    .btn.primary { border-color: transparent; background: linear-gradient(180deg, var(--accent), var(--accent-2)); color: white; }
+    .btn.danger { border-color: transparent; background: linear-gradient(180deg, #ef4444, #f43f5e); color: white; }
+    .btn.ghost { background: transparent; border-color: var(--border); box-shadow: none; }
+
+    #themeToggle { width: 44px; height: 44px; display: grid; place-items: center; font-size: 18px; border-radius: 50%; }
+
+    .new {
+      margin-top: 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 12px; box-shadow: var(--shadow);
+    }
+    .new input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 14px; }
+
+    .cards { list-style: none; padding: 0; margin: 18px 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); display: grid; grid-template-rows: auto 1fr auto; min-height: 280px; }
+    .card header { padding: 12px; border-bottom: 1px solid var(--border); }
+    .card header .row { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+
+    .name { display: block; width: 100%; border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 12px; padding: 10px 12px; font-weight: 600; }
+
+    .more { border-radius: 12px; width: 40px; height: 40px; display: grid; place-items: center; }
+
+    .count {
+      display: grid; place-items: center; padding: 22px 14px 8px;
+    }
+    .count .big { font-variant-numeric: tabular-nums; font-size: clamp(56px, 10vw, 72px); line-height: 1; font-weight: 800; letter-spacing: -1px; }
+    .count .goal { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 10px 12px 14px; }
+    .controls .tall { padding: 16px 0; font-size: 18px; font-weight: 700; }
+
+    .mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 12px 12px; }
+    .mini select, .mini input[type="number"] { width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text); }
+    .mini .toggle { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+
+    .notes { padding: 0 12px 14px; }
+    .notes textarea { width: 100%; min-height: 70px; resize: vertical; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--border); background: transparent; color: var(--text); }
+
+    .progress {
+      height: 10px; background: rgba(0,0,0,.06); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); margin: 10px 12px 12px;
+    }
+    [data-theme="dark"] .progress { background: rgba(255,255,255,.04); }
+    .progress > span { display: block; height: 100%; background: linear-gradient(90deg, var(--success), #22c55e); width: 0; }
+
+    .footer { color: var(--muted); font-size: 13px; line-height: 1.5; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .footer a { color: inherit; }
+
+    .hidden { display: none !important; }
+
+    @media (hover:hover) {
+      .btn:hover, button:hover { filter: brightness(1.03); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🧶 Crochet Counter</h1>
+      <div class="toolbar">
+        <button id="themeToggle" class="btn" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+      </div>
+    </header>
+
+    <section class="new" aria-label="Add a new project">
+      <input id="projectName" type="text" placeholder="Project name (e.g., Granny Square Blanket)" />
+      <button id="addBtn" class="btn primary">Add project</button>
+    </section>
+
+    <ul id="cards" class="cards" aria-live="polite"></ul>
+
+    <section class="footer">
+      <span>Tip: Tap + for each completed row or round. Your projects save automatically in this browser.</span>
+    </section>
+  </div>
+
+  <template id="card-tpl">
+    <li class="card" data-id="">
+      <header>
+        <div class="row">
+          <input class="name" type="text" value="My Project" aria-label="Project name" />
+          <button class="more btn ghost" title="Delete project" aria-label="Delete project">🗑️</button>
+        </div>
+      </header>
+      <div class="count">
+        <div class="big" aria-live="polite">0</div>
+        <div class="goal"></div>
+      </div>
+      <div class="controls">
+        <button class="btn tall" data-action="dec" aria-label="Decrease">−</button>
+        <button class="btn tall primary" data-action="inc" aria-label="Increase">＋</button>
+        <button class="btn tall" data-action="reset" aria-label="Reset">Reset</button>
+      </div>
+      <div class="mini">
+        <label class="toggle"><input type="checkbox" class="lock" /> Lock buttons</label>
+        <select class="step" aria-label="Step size">
+          <option value="1">Step: 1</option>
+          <option value="2">Step: 2</option>
+          <option value="5">Step: 5</option>
+          <option value="10">Step: 10</option>
+        </select>
+        <input type="number" class="target" min="0" step="1" placeholder="Goal (rows)" aria-label="Goal" />
+        <button class="btn ghost" data-action="noteToggle" aria-expanded="false">📝 Notes</button>
+      </div>
+      <div class="progress hidden"><span></span></div>
+      <div class="notes hidden">
+        <textarea placeholder="Notes, hook size, yarn, pattern repeat…"></textarea>
+      </div>
+    </li>
+  </template>
+
+  <script>
+    (function(){
+      const $ = (sel, root=document) => root.querySelector(sel);
+      const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+      const KEY = 'crochet_counter_projects_v1';
+
+      // THEME
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const savedTheme = localStorage.getItem('cc_theme') || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      const themeBtn = $('#themeToggle');
+      updateThemeIcon();
+      themeBtn.addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('cc_theme', next);
+        updateThemeIcon();
+      });
+      function updateThemeIcon(){ themeBtn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙'; }
+
+      // STATE
+      /** @type {Array<{id:string,name:string,count:number,step:number,goal:number|null,notes:string,locked:boolean}>} */
+      let projects = [];
+      try { projects = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch {}
+      if (!Array.isArray(projects)) projects = [];
+      if (projects.length === 0) {
+        projects.push({ id: uid(), name: 'My Project', count: 0, step: 1, goal: null, notes: '', locked: false });
+        save();
+      }
+
+      const cardsUl = $('#cards');
+      const tpl = $('#card-tpl');
+
+      // RENDER
+      function render(){
+        cardsUl.innerHTML = '';
+        projects.forEach(p => {
+          const node = tpl.content.firstElementChild.cloneNode(true);
+          node.dataset.id = p.id;
+          $('.name', node).value = p.name;
+          $('.big', node).textContent = String(p.count);
+          $('.step', node).value = String(p.step);
+          $('.lock', node).checked = !!p.locked;
+          const tgt = $('.target', node);
+          if (p.goal != null) tgt.value = p.goal;
+          const notesWrap = $('.notes', node);
+          if (p.notes && p.notes.trim()) { notesWrap.classList.remove('hidden'); $('textarea', node).value = p.notes; $('[data-action="noteToggle"]', node).setAttribute('aria-expanded', 'true'); }
+
+          updateGoalUI(node, p);
+          cardsUl.appendChild(node);
+        });
+      }
+
+      function updateGoalUI(node, p){
+        const goalEl = $('.goal', node);
+        const progress = $('.progress', node);
+        const bar = $('.progress span', node);
+        if (p.goal && p.goal > 0) {
+          const percent = Math.min(100, Math.max(0, Math.round((p.count / p.goal) * 100)));
+          goalEl.textContent = `${p.count}/${p.goal} rows`;
+          progress.classList.remove('hidden');
+          bar.style.width = percent + '%';
+        } else {
+          goalEl.textContent = '';
+          progress.classList.add('hidden');
+          bar.style.width = '0%';
+        }
+      }
+
+      function save(){ localStorage.setItem(KEY, JSON.stringify(projects)); }
+
+      function uid(){ return (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2); }
+
+      // ADD PROJECT
+      $('#addBtn').addEventListener('click', () => {
+        const name = ($('#projectName').value || '').trim() || 'New Project';
+        projects.unshift({ id: uid(), name, count: 0, step: 1, goal: null, notes: '', locked: false });
+        $('#projectName').value = '';
+        save();
+        render();
+        // focus the new card's name
+        const first = $('.card', cardsUl);
+        if (first) $('.name', first).focus();
+      });
+
+      // CARD EVENTS (event delegation)
+      cardsUl.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        const li = e.target.closest('.card');
+        if (!li) return;
+        const id = li.dataset.id;
+        const p = projects.find(x => x.id === id);
+        if (!p) return;
+
+        if (btn) {
+          const action = btn.dataset.action;
+          if (btn.classList.contains('more')) {
+            // delete
+            if (confirm(`Delete "${p.name}"?`)) {
+              projects = projects.filter(x => x.id !== id);
+              save(); render();
+            }
+            return;
+          }
+          if (action === 'inc') return changeBy(p, li, +p.step);
+          if (action === 'dec') return changeBy(p, li, -p.step);
+          if (action === 'reset') {
+            if (p.count === 0) return;
+            if (confirm('Reset this counter to 0?')) { p.count = 0; save(); updateCard(li, p); }
+            return;
+          }
+          if (action === 'noteToggle') {
+            const wrap = $('.notes', li);
+            wrap.classList.toggle('hidden');
+            btn.setAttribute('aria-expanded', wrap.classList.contains('hidden') ? 'false' : 'true');
+            return;
+          }
+        }
+      });
+
+      // Inputs changes
+      cardsUl.addEventListener('input', (e) => {
+        const li = e.target.closest('.card');
+        if (!li) return;
+        const id = li.dataset.id;
+        const p = projects.find(x => x.id === id);
+        if (!p) return;
+
+        if (e.target.classList.contains('name')) {
+          p.name = e.target.value.slice(0, 60);
+        } else if (e.target.classList.contains('step')) {
+          p.step = Math.max(1, parseInt(e.target.value || '1', 10));
+        } else if (e.target.classList.contains('target')) {
+          const v = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10));
+          p.goal = Number.isFinite(v) ? v : null;
+        } else if (e.target.tagName === 'TEXTAREA') {
+          p.notes = e.target.value;
+        } else if (e.target.classList.contains('lock')) {
+          p.locked = !!e.target.checked;
+        }
+        save();
+        updateCard(li, p);
+      });
+
+      function updateCard(li, p){
+        $('.big', li).textContent = String(p.count);
+        updateGoalUI(li, p);
+      }
+
+      function changeBy(p, li, delta){
+        if (p.locked) return;
+        p.count = Math.max(0, p.count + delta);
+        save();
+        animateBump($('.big', li));
+        updateCard(li, p);
+        try { navigator.vibrate && navigator.vibrate(10); } catch {}
+      }
+
+      function animateBump(el){
+        el.animate([
+          { transform: 'scale(1)', offset: 0 },
+          { transform: 'scale(1.06)', offset: 0.4 },
+          { transform: 'scale(1)', offset: 1 }
+        ], { duration: 120, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      }
+
+      // Keyboard shortcuts (operate the first card)
+      document.addEventListener('keydown', (e) => {
+        const first = $('.card', cardsUl); if (!first) return;
+        const id = first.dataset.id; const p = projects.find(x => x.id === id);
+        if (!p || p.locked) return;
+        if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return; // don't hijack typing
+        if (e.key === '+') { changeBy(p, first, +p.step); }
+        if (e.key === '-' || e.key === '_') { changeBy(p, first, -p.step); }
+        if (e.key.toLowerCase() === 'r') { p.count = 0; save(); updateCard(first, p); }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
